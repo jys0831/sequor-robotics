@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sequor Robotics — Real 3D Gym</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;700&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #070809;
+    --white: #f0f2f5;
+    --cyan: #00e5ff;
+    --orange: #f5a623;
+    --gray: #111316;
+    --gray2: #1e2128;
+    --muted: #8892a0;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', 'Noto Sans KR', sans-serif;
+    --font-kr: 'Noto Sans KR', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* CANVAS */
+  #bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .35; }
+
+  /* TICKER */
+  .ticker-wrap {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    overflow: hidden; background: var(--cyan); padding: 8px 0;
+  }
+  .ticker { display: flex; width: max-content; animation: ticker 24s linear infinite; }
+  .ticker-item {
+    font-family: var(--font-display); font-size: .8rem;
+    letter-spacing: .14em; color: var(--black);
+    padding: 0 32px; white-space: nowrap;
+  }
+  .tdot { margin: 0 10px; color: rgba(0,0,0,.4); }
+
+  /* MAIN WRAPPER */
+  .page {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 64px 24px 48px;
+    text-align: center;
+  }
+
+  /* HERO TOP */
+  .company-tag {
+    font-size: .6rem; letter-spacing: .35em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 12px;
+    opacity: 0; animation: fadeUp .7s .1s forwards;
+  }
+
+  .company-name {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 9vw, 5.5rem);
+    letter-spacing: .1em; line-height: 1;
+    color: var(--white);
+    opacity: 0; animation: fadeUp .8s .2s forwards;
+  }
+  .company-name span { color: var(--cyan); }
+
+  .company-sub {
+    font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--muted); margin-top: 8px;
+    opacity: 0; animation: fadeUp .7s .35s forwards;
+  }
+
+  /* DIVIDER */
+  .divider-line {
+    width: 1px; height: 40px;
+    background: linear-gradient(180deg, transparent, var(--cyan), transparent);
+    margin: 24px auto;
+    opacity: 0; animation: fadeIn .6s .55s forwards;
+  }
+
+  /* PRODUCT LABEL */
+  .product-label {
+    font-size: .58rem; letter-spacing: .35em; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: 8px;
+    opacity: 0; animation: fadeUp .6s .65s forwards;
+  }
+
+  .product-name {
+    font-family: var(--font-display);
+    font-size: clamp(3.2rem, 14vw, 8rem);
+    line-height: .9; letter-spacing: .04em;
+    background: linear-gradient(135deg, #fff 0%, #b8e8f0 50%, var(--cyan) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    opacity: 0; animation: fadeUp .9s .75s forwards;
+  }
+
+  .product-tagline {
+    font-family: var(--font-kr); font-size: clamp(.82rem, 2.5vw, 1rem);
+    font-weight: 300; color: rgba(240,242,245,.5);
+    margin-top: 10px; letter-spacing: .04em;
+    opacity: 0; animation: fadeUp .7s .9s forwards;
+  }
+
+  /* GREETING */
+  .greeting {
+    max-width: 620px; margin: 28px auto 0;
+    opacity: 0; animation: fadeUp .8s 1.05s forwards;
+  }
+  .greeting-inner {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(0,229,255,.15);
+    padding: 24px 28px;
+  }
+  .greeting p {
+    font-size: .95rem; line-height: 1.85; color: rgba(240,242,245,.75);
+    font-weight: 300;
+  }
+  .greeting p.kr {
+    font-family: var(--font-kr); font-size: .85rem;
+    color: rgba(240,242,245,.42); margin-top: 10px; font-weight: 300;
+    border-top: 1px solid rgba(255,255,255,.06); padding-top: 10px;
+  }
+
+  /* VIDEO */
+  .video-section {
+    width: 100%; max-width: 620px;
+    margin-top: 28px;
+    opacity: 0; animation: fadeUp .8s .95s forwards;
+  }
+  .video-wrap {
+    width: 100%; aspect-ratio: 16/9;
+    background: var(--gray);
+    border: 1px solid var(--gray2);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; cursor: pointer;
+    transition: border-color .25s, background .25s;
+    position: relative; overflow: hidden;
+  }
+  .video-wrap:hover { border-color: var(--cyan); background: rgba(0,229,255,.04); }
+  .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .video-play-btn {
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 2px solid var(--cyan);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .25s;
+  }
+  .video-wrap:hover .video-play-btn { background: rgba(0,229,255,.15); }
+  .video-play-label { font-size: .78rem; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); }
+  .video-play-sub { font-family: var(--font-kr); font-size: .7rem; color: rgba(136,146,160,.5); font-weight: 300; }
+
+  /* ACTION BUTTONS */
+  .actions {
+    width: 100%; max-width: 620px;
+    margin-top: 28px;
+    display: flex; flex-direction: column; gap: 12px;
+    opacity: 0; animation: fadeUp .8s 1.25s forwards;
+  }
+
+  .action-btn {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 24px;
+    background: var(--gray);
+    border: 1px solid var(--gray2);
+    color: var(--white);
+    text-decoration: none;
+    text-align: left;
+    transition: border-color .25s, background .25s, transform .2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .action-btn::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--cyan);
+    transform: scaleY(0); transform-origin: bottom;
+    transition: transform .25s;
+  }
+  .action-btn:hover { border-color: var(--cyan); background: rgba(0,229,255,.05); transform: translateX(4px); }
+  .action-btn:hover::before { transform: scaleY(1); }
+
+  .action-btn.primary {
+    background: var(--cyan);
+    border-color: var(--cyan);
+    color: var(--black);
+  }
+  .action-btn.primary::before { background: rgba(0,0,0,.15); }
+  .action-btn.primary:hover { background: #fff; border-color: #fff; }
+  .action-btn.primary .btn-label { color: var(--black); }
+  .action-btn.primary .btn-sub { color: rgba(0,0,0,.55); }
+
+  .btn-icon {
+    width: 38px; height: 38px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .action-btn.primary .btn-icon {
+    background: rgba(0,0,0,.12); border-radius: 2px;
+  }
+
+  .btn-text { flex: 1; }
+  .btn-label {
+    font-size: .88rem; font-weight: 600; letter-spacing: .04em;
+    display: block; margin-bottom: 2px;
+  }
+  .btn-sub {
+    font-family: var(--font-kr); font-size: .72rem;
+    color: rgba(180,190,200,.85); font-weight: 300;
+  }
+
+  .btn-arrow {
+    font-size: .9rem; color: var(--muted);
+    transition: transform .2s, color .2s;
+    flex-shrink: 0;
+  }
+  .action-btn:hover .btn-arrow { transform: translateX(3px); color: var(--cyan); }
+  .action-btn.primary:hover .btn-arrow { color: var(--black); }
+
+  /* SECTION DIVIDER */
+  .section-sep {
+    width: 100%; max-width: 480px;
+    height: 1px; background: var(--gray2);
+    margin: 4px 0;
+    opacity: 0; animation: fadeIn .5s 1.25s forwards;
+  }
+
+  /* FOOTER NOTE */
+  .footer-note {
+    margin-top: 36px;
+    opacity: 0; animation: fadeUp .6s 1.5s forwards;
+  }
+  .footer-note p {
+    font-family: var(--font-display); font-size: .85rem;
+    letter-spacing: .2em; color: var(--cyan);
+    margin-bottom: 4px;
+  }
+  .footer-note small {
+    font-family: var(--font-kr); font-size: .7rem;
+    color: rgba(136,146,160,.5); font-weight: 300;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes ticker { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+
+  /* MOBILE */
+  @media (max-width: 480px) {
+    .page { padding: 52px 18px 40px; }
+    .greeting-inner { padding: 18px 20px; }
+    .action-btn { padding: 15px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="ticker-item">PHYSICAL AI SUPERCONNECT IN SILICON VALLEY 2026<span class="tdot">✦</span>SEQUOR ROBOTICS<span class="tdot">✦</span>REAL 3D GYM<span class="tdot">✦</span>세코어로보틱스<span class="tdot">✦</span>JUNE 24<span class="tdot">✦</span>SCALING PHYSICAL AI THROUGH ROBOT FOUNDATION MODELS<span class="tdot">✦</span></span>
+    <span class="ticker-item">PHYSICAL AI SUPERCONNECT IN SILICON VALLEY 2026<span class="tdot">✦</span>SEQUOR ROBOTICS<span class="tdot">✦</span>REAL 3D GYM<span class="tdot">✦</span>세코어로보틱스<span class="tdot">✦</span>JUNE 24<span class="tdot">✦</span>SCALING PHYSICAL AI THROUGH ROBOT FOUNDATION MODELS<span class="tdot">✦</span></span>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- HERO -->
+  <p class="company-tag">Physical AI Superconnect in Silicon Valley 2026</p>
+  <h1 class="company-name">SEQUOR<br><span>ROBOTICS</span></h1>
+  <p class="company-sub">Scaling Physical AI through Robot Foundation Models</p>
+
+  <div class="divider-line"></div>
+
+  <p class="product-label">Software Product</p>
+  <div class="product-name">REAL 3D GYM</div>
+  <p class="product-tagline">A robot training platform that lowers the barrier to simulation adoption</p>
+
+  <!-- VIDEO -->
+  <div class="video-section">
+    <div class="video-wrap" id="videoWrap" onclick="loadVideo()">
+      <div class="video-play-btn">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--cyan)"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <p class="video-play-label">Watch Introduction Video</p>
+      <p class="video-play-sub">소개 영상 보기</p>
+    </div>
+  </div>
+
+  <!-- GREETING -->
+  <div class="greeting">
+    <div class="greeting-inner">
+      <p>Thank you for visiting our booth at Physical AI Superconnect 2026.<br>Sequor Robotics is a software startup providing 3D simulation environments<br>so that robots can learn the real world.<br>Feel free to download the materials below 😊</p>
+      <p class="kr">부스를 방문해 주셔서 감사합니다!<br>세코어로보틱스는 로봇이 실제 세계를 학습할 수 있도록<br>3D 시뮬레이션 환경을 제공하는 소프트웨어 스타트업입니다.<br>아래 자료를 자유롭게 다운로드해 주세요 😊</p>
+    </div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="actions">
+
+    <!-- Download Brochure -->
+    <a href="brochure.pdf" download class="action-btn primary">
+      <div class="btn-icon">📄</div>
+      <div class="btn-text">
+        <span class="btn-label">Download Brochure</span>
+        <span class="btn-sub">제품 브로셔 다운로드</span>
+      </div>
+      <span class="btn-arrow">↓</span>
+    </a>
+
+    <!-- Download IR Deck (English) -->
+    <a href="ir_english.pdf" download class="action-btn">
+      <div class="btn-icon">📊</div>
+      <div class="btn-text">
+        <span class="btn-label">Download IR Deck <span style="font-size:.72rem;font-weight:400;opacity:.7;">(English)</span></span>
+        <span class="btn-sub">투자자료 다운로드 · English ver.</span>
+      </div>
+      <span class="btn-arrow">↓</span>
+    </a>
+
+    <!-- Download IR Deck (Korean) -->
+    <a href="ir_korean.pdf" download class="action-btn">
+      <div class="btn-icon">📊</div>
+      <div class="btn-text">
+        <span class="btn-label">Download IR Deck <span style="font-size:.72rem;font-weight:400;opacity:.7;">(Korean)</span></span>
+        <span class="btn-sub">투자자료 다운로드 · 국문 ver.</span>
+      </div>
+      <span class="btn-arrow">↓</span>
+    </a>
+
+    <div class="section-sep"></div>
+
+    <!-- Homepage -->
+    <a href="https://www.sequorrobotics.com/sequor-homekor" target="_blank" class="action-btn">
+      <div class="btn-icon">🌐</div>
+      <div class="btn-text">
+        <span class="btn-label">Visit Homepage</span>
+        <span class="btn-sub">홈페이지 방문 · sequorrobotics.com</span>
+      </div>
+      <span class="btn-arrow">→</span>
+    </a>
+
+    <!-- Contact for Demo -->
+    <a href="mailto:jeongwoo.oh@sequorrobotics.com?subject=Demo Request — Physical AI Superconnect 2026" class="action-btn">
+      <div class="btn-icon">✉️</div>
+      <div class="btn-text">
+        <span class="btn-label">Contact for Demo</span>
+        <span class="btn-sub">데모 및 문의 · jeongwoo.oh@sequorrobotics.com</span>
+      </div>
+      <span class="btn-arrow">→</span>
+    </a>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-note">
+    <p>JUNE 24, 2026 · SILICON VALLEY</p>
+    <small>© 2026 Sequor Robotics · Real 3D Gym</small>
+  </div>
+
+</div>
+
+<script>
+// VIDEO
+// ★ 유튜브 Video ID를 아래에 입력하세요 (예: 'dQw4w9WgXcQ')
+const VIDEO_ID = 'YOUR_YOUTUBE_VIDEO_ID';
+function loadVideo() {
+  if (VIDEO_ID === 'YOUR_YOUTUBE_VIDEO_ID') {
+    alert('영상 링크를 연결해 주세요!\nPlease update the VIDEO_ID in the script.');
+    return;
+  }
+  const wrap = document.getElementById('videoWrap');
+  const iframe = document.createElement('iframe');
+  iframe.src = `https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1`;
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  iframe.allowFullscreen = true;
+  wrap.innerHTML = '';
+  wrap.appendChild(iframe);
+}
+
+// PARTICLE BG
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+let W, H, pts = [];
+
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+resize(); addEventListener('resize', resize);
+
+class P {
+  constructor() { this.r(); }
+  r() {
+    this.x = Math.random()*W; this.y = Math.random()*H;
+    this.vx = (Math.random()-.5)*.22; this.vy = (Math.random()-.5)*.22;
+    this.a = Math.random()*.5+.08; this.s = Math.random()*1.3+.2;
+    this.c = Math.random()>.8 ? '#00e5ff' : '#fff';
+  }
+  u() { this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>W||this.y<0||this.y>H) this.r(); }
+  d() { ctx.globalAlpha=this.a; ctx.fillStyle=this.c; ctx.beginPath(); ctx.arc(this.x,this.y,this.s,0,Math.PI*2); ctx.fill(); }
+}
+
+for(let i=0;i<120;i++) pts.push(new P());
+
+function lines() {
+  for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+    const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.hypot(dx,dy);
+    if(d<90){ ctx.globalAlpha=(1-d/90)*.08; ctx.strokeStyle='#00e5ff'; ctx.lineWidth=.4; ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }
+  }
+}
+
+(function loop(){ ctx.clearRect(0,0,W,H); pts.forEach(p=>{p.u();p.d();}); lines(); ctx.globalAlpha=1; requestAnimationFrame(loop); })();
+</script>
+</body>
+</html>

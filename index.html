@@ -137,25 +137,32 @@
   }
   .video-wrap {
     width: 100%; aspect-ratio: 16/9;
-    background: var(--gray);
+    background: var(--gray) url('https://img.youtube.com/vi/kf9E9f26EDA/maxresdefault.jpg') center/cover no-repeat;
     border: 1px solid var(--gray2);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 10px; cursor: pointer;
-    transition: border-color .25s, background .25s;
+    transition: border-color .25s;
     position: relative; overflow: hidden;
   }
-  .video-wrap:hover { border-color: var(--cyan); background: rgba(0,229,255,.04); }
+  .video-wrap::before {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(0,0,0,.45);
+    transition: background .25s;
+  }
+  .video-wrap:hover::before { background: rgba(0,0,0,.3); }
+  .video-wrap:hover { border-color: var(--cyan); }
   .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
   .video-play-btn {
     width: 64px; height: 64px; border-radius: 50%;
     border: 2px solid var(--cyan);
     display: flex; align-items: center; justify-content: center;
     transition: background .25s;
+    position: relative; z-index: 1;
   }
   .video-wrap:hover .video-play-btn { background: rgba(0,229,255,.15); }
-  .video-play-label { font-size: .78rem; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); }
-  .video-play-sub { font-family: var(--font-kr); font-size: .7rem; color: rgba(136,146,160,.5); font-weight: 300; }
+  .video-play-label { font-size: .78rem; letter-spacing: .15em; text-transform: uppercase; color: var(--white); position: relative; z-index: 1; }
+  .video-play-sub { font-family: var(--font-kr); font-size: .7rem; color: rgba(240,242,245,.6); font-weight: 300; position: relative; z-index: 1; }
 
   /* ACTION BUTTONS */
   .actions {
@@ -342,7 +349,7 @@
     <div class="section-sep"></div>
 
     <!-- Homepage -->
-    <a href="https://www.sequorrobotics.com/sequor-homekor" target="_blank" class="action-btn">
+    <a href="https://www.sequorrobotics.com/home-en" target="_blank" class="action-btn">
       <div class="btn-icon">🌐</div>
       <div class="btn-text">
         <span class="btn-label">Visit Homepage</span>
